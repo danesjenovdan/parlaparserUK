@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class VotesSpider(scrapy.Spider):
-    name = "speeches"
+    name = "votes"
 
     start_urls = [
         'http://www.publicwhip.org.uk/divisions.php',
