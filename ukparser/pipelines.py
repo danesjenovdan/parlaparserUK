@@ -138,7 +138,7 @@ class UkparserPipeline(object):
                 debate_text = item['debate_text']
                 debate_date = item['debate_date']
                 debate_key = get_vote_key(debate_text, debate_date.isoformat())
-                if not debate_key in self.added_debates.keys():
+                if not debate_key in self.votes:
                     person_id = self.members[item['speaker']]
                     debate_id = self.added_debates[debate_key]
                     response = requests.post(API_URL + 'speechs/',
