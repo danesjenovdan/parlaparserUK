@@ -66,7 +66,11 @@ ROBOTSTXT_OBEY = True
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     'ukparser.pipelines.UkparserPipeline': 300,
+    'ukparser.pipelines.ImagesPipeline': 1
 }
+
+IMAGES_STORE = '/home/parlauser/parlastatic/parlacdn/'
+#IMAGES_STORE = 'imgs'
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html
@@ -89,6 +93,6 @@ ITEM_PIPELINES = {
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-API_URL = ''
+API_URL = 'http://data.uk.parlameter.si/v1/'
 
 API_AUTH = ('parlauser', 'parlapassword')

@@ -11,6 +11,41 @@ from ukparser.spiders.people_spider import PeopleSpider
 from ukparser.spiders.content_spider import ContentSpider
 from datetime import datetime
 
+import scrapy
+from scrapy.pipelines.images import ImagesPipeline
+from scrapy.exceptions import DropItem
+
+class ImagesPipeline(ImagesPipeline):
+    members = {}
+    def __init__(self, *args, **kwargs):
+        super(ImagesPipeline, self).__init__(*args, **kwargs)
+        print('imgs pipeline getMembers')
+        mps = requests.get(API_URL + 'getMPs').json()
+    
+        for mp in mps:
+            self.members[mp['name']] = mp['id']
+
+    def file_path(self, request, response=None, info=None):
+        print("fajl path")
+        print(request.meta['name'], 'file-path')
+        image_guid = str(self.members[request.meta['name']]) + '.jpeg'
+        print(image_guid)
+        #log.msg(image_guid, level=log.DEBUG)
+        return 'full/%s' % (image_guid)
+
+    def get_media_requests(self, item, info):
+        print("get media")
+        yield scrapy.Request(item['image_urls'][0], meta=item)
+
+    def item_completed(self, results, item, info):
+        print("item compelte")
+        print(results)
+        image_paths = [x['path'] for ok, x in results if ok]
+        if not image_paths:
+            raise DropItem("Item contains no images")
+        item['image_paths'] = image_paths
+        return item
+
 
 class UkparserPipeline(object):
     value = 0
@@ -168,7 +203,8 @@ class UkparserPipeline(object):
                         area_id = self.areas[item['distict']]
                     else:
                         response = requests.post(API_URL + 'areas/',
-                                             json={"name": item['distict']},
+                                             json={"name": item['distict'],
+                                                   "calssification": "okraj"},
                                              auth=HTTPBasicAuth(API_AUTH[0], API_AUTH[1])
                                             )
                         print(response.content)
