@@ -11,7 +11,7 @@ class ContentSpider(scrapy.Spider):
         ]
 
     def parse(self, response):
-        print('parser vote urls', response)
+        #print('parser vote urls', response)
         for i, vote in enumerate(response.css('table.votes > tr')):
             if i == 0:
                 print("continue")
@@ -30,12 +30,21 @@ class ContentSpider(scrapy.Spider):
         # DEBATES
         text = ''
         fdate = None
+        try:
+            mot_id = response.url.split('number=')[1]
+        except:
+            mot_id = ''
+
+        print("MOTION ID FROM URL", mot_id)
+
         if parse_motion:
             parse_motion = False
             title = response.css('div#main > h1::text').extract()[0]
             date = title.split(' — ')[-1]
             fdate = datetime.strptime(date.strip(), '%d %b %Y at %H:%M')
-            text = ' — '.join(title.split(' — ')[:-1])
+            text = ' — '.join(title.split(' — ')[:-1]).strip()
+
+            text += '||' + mot_id
             yield {'type': 'debate',
                    'date': fdate,
                    'text': text.strip(),
@@ -46,7 +55,9 @@ class ContentSpider(scrapy.Spider):
             for href in paragraf.css('a'):
                 if href.css('::text').extract()[0] == 'all votes':
                     url = 'http://www.publicwhip.org.uk/' + href.css('::attr(href)').extract()[0]
-                    yield scrapy.Request(url=url, callback=self.parse_ballots)
+                    request = scrapy.Request(url=url, callback=self.parse_ballots)
+                    request.meta['text'] = text
+                    yield request
 
         # SPEECHES
         url = response.css('div#main > div.motion > p > b').css("a::attr(href)").extract()[0]
@@ -60,7 +71,8 @@ class ContentSpider(scrapy.Spider):
         title = response.css('div#main > h1::text').extract()[0]
         date = title.split(' — ')[-1]
         fdate = datetime.strptime(date.strip(), '%d %b %Y at %H:%M')
-        text = ' — '.join(title.split(' — ')[:-1])
+        #text = ' — '.join(title.split(' — ')[:-1])
+        text = response.meta['text']
         data = []
         for i, ballot in enumerate(response.css('table.votes > tr')):
             if i == 0:
