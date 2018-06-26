@@ -5,6 +5,12 @@ from datetime import datetime
 
 class ContentSpider(scrapy.Spider):
     name = "content"
+    custom_settings = {
+        'ITEM_PIPELINES': {
+            'ukparser.pipelines.UkparserPipeline': 300,
+        }
+    }
+
 
     start_urls = [
         'http://www.publicwhip.org.uk/divisions.php',

@@ -4,6 +4,12 @@ import scrapy
 class PeopleSpider(scrapy.Spider):
     name = 'images'
 
+    custom_settings = {
+        'ITEM_PIPELINES': {
+            'ukparser.pipelines.ImagesPipeline': 1
+        }
+    }
+
     start_urls = [
         'http://www.publicwhip.org.uk/mps.php',
         ]

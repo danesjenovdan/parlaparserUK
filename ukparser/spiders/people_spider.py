@@ -4,6 +4,12 @@ import scrapy
 class PeopleSpider(scrapy.Spider):
     name = 'people'
 
+    custom_settings = {
+        'ITEM_PIPELINES': {
+            'ukparser.pipelines.UkparserPipeline': 300,
+        }
+    }
+
     start_urls = [
         'http://www.publicwhip.org.uk/mps.php',
         ]
@@ -26,3 +32,5 @@ def get_row_text(row):
     for td in row:
         out.append(' '.join(t.strip() for t in td.css('::text').extract()).strip())
     return out
+
+
