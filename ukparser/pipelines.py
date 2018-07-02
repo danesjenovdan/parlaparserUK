@@ -49,7 +49,7 @@ class ImagesPipeline(ImagesPipeline):
 
 class UkparserPipeline(object):
     value = 0
-    commons_id = 56
+    commons_id = 11
     local_data = {}
     members = {}
     parties = {}
@@ -84,7 +84,7 @@ class UkparserPipeline(object):
         for area in areas:
             self.areas[area['name']] = area['id']
 
-        print('pipeline get districts')
+        print('pipeline get sessions')
         sessions = getDataFromPagerApiDRF(API_URL + 'sessions')
         for session in sessions:
             self.added_debates[get_vote_key(session['name'], session['start_time'])] = session['id']
@@ -119,6 +119,7 @@ class UkparserPipeline(object):
                                              json={"session": dabate_id,
                                                    "text": item['text'],
                                                    "date": item['date'].isoformat(),
+                                                   "tags": [','],
                                                    'party': self.commons_id},
                                              auth=HTTPBasicAuth(API_AUTH[0], API_AUTH[1])
                                             )
