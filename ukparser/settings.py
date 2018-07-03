@@ -93,6 +93,8 @@ IMAGES_STORE = '/home/parlauser/parlastatic/parlacdn/'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-API_URL = 'http://data.uk.parlameter.si/v1/'
+API_URL = 'http://51.15.192.171/v1/'
 
 API_AUTH = ('parlauser', 'parlapassword')
+
+API_DATE_FORMAT = '%d.%m.%Y'

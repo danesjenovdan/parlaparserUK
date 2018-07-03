@@ -1,0 +1,31 @@
+from .base_parser import BaseParser
+from .utils import get_vote_key
+
+from ..settings import API_URL, API_AUTH, API_DATE_FORMAT
+
+from datetime import datetime
+
+import requests
+
+class SessionParser(BaseParser):
+    """
+    {"results": "Ukupno: 101. Za: 96. Suzdr\u017ean: 2. Protiv: 3.",
+     "results_data": ["Rasprava je zaklju\u010dena 23. studenoga 2016.", "Zakon je donesen na  2. sjednici 25. studenoga 2016. (96 glasova \"za\", 3 \"protiv\", 2 \"suzdr\u017eana\").", "O ovoj to\u010dki dnevnog reda o\u010ditovali su se:\r\n"],
+     "time": "25.11.2016. 12:02",
+     "title": "KONA\u010cNI PRIJEDLOG ZAKONA O POTVR\u0110IVANJU PROTOKOLA UZ SJEVERNOATLANTSKI UGOVOR O PRISTUPANJU CRNE GORE, hitni postupak, prvo i drugo \u010ditanje, P.Z. br. 31",
+     "type": "vote_ballots",
+     "ballots": [{"voter": "Aleksi\u0107 Goran", "option": "+"}, {"voter": "Ambru\u0161ec Ljubica", "option": "+"}, {"voter": "Anu\u0161i\u0107 Ivan", "option": "+"}, {"voter": "Ba\u010di\u0107 Branko", "option": "+"}, {"voter": "Bali\u0107 Marijana", "option": "+"}, {"voter": "Bari\u0161i\u0107 Dra\u017een", "option": "+"}, {"voter": "Batini\u0107 Milorad", "option": "+"}, {"voter": "Bedekovi\u0107 Vesna", "option": "+"}, {"voter": "Beus Richembergh Goran", "option": "+"}, {"voter": "Bilek Vladimir", "option": "+"}, {"voter": "Boban Bla\u017eenko", "option": "+"}, {"voter": "Bori\u0107 Josip", "option": "+"}, {"voter": "Bo\u0161njakovi\u0107 Dra\u017een", "option": "+"}, {"voter": "Brki\u0107 Milijan", "option": "+"}, {"voter": "Bulj Miro", "option": "+"}, {"voter": "Bunjac Branimir", "option": "-"}, {"voter": "Buri\u0107 Majda", "option": "+"}, {"voter": "Culej Stevo", "option": "+"}, {"voter": "\u010ci\u010dak Mato", "option": "+"}, {"voter": "\u0106eli\u0107 Ivan", "option": "+"}, {"voter": "\u0106osi\u0107 Pero", "option": "+"}, {"voter": "Dodig Goran", "option": "+"}, {"voter": "\u0110aki\u0107 Josip", "option": "+"}, {"voter": "Esih Bruna", "option": "+"}, {"voter": "Felak Damir", "option": "+"}, {"voter": "Frankovi\u0107 Mato", "option": "+"}, {"voter": "Glasnovi\u0107 \u017deljko", "option": "o"}, {"voter": "Glasovac Sabina", "option": "+"}, {"voter": "Grmoja Nikola", "option": "+"}, {"voter": "Hajdukovi\u0107 Domagoj", "option": "+"}, {"voter": "Hasanbegovi\u0107 Zlatko", "option": "+"}, {"voter": "Horvat Darko", "option": "+"}, {"voter": "Hrg Branko", "option": "+"}, {"voter": "Jandrokovi\u0107 Gordan", "option": "+"}, {"voter": "Jankovics R\u00f3bert", "option": "+"}, {"voter": "Jeli\u0107 Damir", "option": "+"}, {"voter": "Jelkovac Marija", "option": "+"}, {"voter": "Josi\u0107 \u017deljka", "option": "+"}, {"voter": "Jovanovi\u0107 \u017deljko", "option": "+"}, {"voter": "Juri\u010dev-Martin\u010dev Branka", "option": "+"}, {"voter": "Kajtazi Veljko", "option": "+"}, {"voter": "Karli\u0107 Mladen", "option": "+"}, {"voter": "Kirin Ivan", "option": "+"}, {"voter": "Klari\u0107 Tomislav", "option": "+"}, {"voter": "Kliman Anton", "option": "+"}, {"voter": "Klisovi\u0107 Jo\u0161ko", "option": "+"}, {"voter": "Kosor Darinko", "option": "+"}, {"voter": "Kova\u010d Miro", "option": "+"}, {"voter": "Kristi\u0107 Maro", "option": "+"}, {"voter": "Kri\u017eani\u0107 Josip", "option": "+"}, {"voter": "Krstulovi\u0107 Opara Andro", "option": "+"}, {"voter": "Lackovi\u0107 \u017deljko", "option": "o"}, {"voter": "Lalovac Boris", "option": "+"}, {"voter": "Lekaj Prljaskaj Ermina", "option": "+"}, {"voter": "Lon\u010dar Davor", "option": "+"}, {"voter": "Lovrinovi\u0107 Ivan", "option": "+"}, {"voter": "Luci\u0107 Franjo", "option": "+"}, {"voter": "Luka\u010di\u0107 Ljubica", "option": "+"}, {"voter": "Maksim\u010duk Ljubica", "option": "+"}, {"voter": "Mati\u0107 Predrag", "option": "+"}, {"voter": "Mesi\u0107 Jasen", "option": "+"}, {"voter": "Mikuli\u0107 Andrija", "option": "+"}, {"voter": "Mili\u010devi\u0107 Davor", "option": "+"}, {"voter": "Milinovi\u0107 Darko", "option": "+"}, {"voter": "Milo\u0161evi\u0107 Boris", "option": "+"}, {"voter": "Milo\u0161evi\u0107 Domagoj Ivan", "option": "+"}, {"voter": "Mrak-Tarita\u0161 Anka", "option": "+"}, {"voter": "Nin\u010devi\u0107-Lesandri\u0107 Ivana", "option": "+"}, {"voter": "Pari\u0107 Darko", "option": "+"}, {"voter": "Peri\u0107 Grozdana", "option": "+"}, {"voter": "Petrijev\u010danin Vuksanovi\u0107 Irena", "option": "+"}, {"voter": "Petrov Bo\u017eo", "option": "+"}, {"voter": "Podolnjak Robert", "option": "+"}, {"voter": "Prgomet Drago", "option": "+"}, {"voter": "Puh Marija", "option": "+"}, {"voter": "Pusi\u0107 Vesna", "option": "+"}, {"voter": "Radin Furio", "option": "+"}, {"voter": "Ragu\u017e \u017deljko", "option": "+"}, {"voter": "Reiner \u017deljko", "option": "+"}, {"voter": "Romi\u0107 Davor", "option": "+"}, {"voter": "Ronko Zdravko", "option": "+"}, {"voter": "Ro\u0161\u010di\u0107 Dragica", "option": "+"}, {"voter": "Runti\u0107 Hrvoje", "option": "+"}, {"voter": "Sanader Ante", "option": "+"}, {"voter": "Sin\u010di\u0107 Ivan", "option": "-"}, {"voter": "Sladoljev Marko", "option": "+"}, {"voter": "Strenja-Lini\u0107 Ines", "option": "+"}, {"voter": "Stri\u010dak An\u0111elko", "option": "+"}, {"voter": "\u0160imi\u0107 Marko", "option": "+"}, {"voter": "\u0160imi\u0107 Miroslav", "option": "+"}, {"voter": "\u0160ipi\u0107 Ivan", "option": "+"}, {"voter": "\u0160kibola Marin", "option": "-"}, {"voter": "\u0160kori\u0107 Petar", "option": "+"}, {"voter": "Topolko Bernarda", "option": "+"}, {"voter": "Totgergeli Miro", "option": "+"}, {"voter": "Tu\u0111man Miroslav", "option": "+"}, {"voter": "Turina-\u0110uri\u0107 Nada", "option": "+"}, {"voter": "Tu\u0161ek \u017darko", "option": "+"}, {"voter": "Varda Ka\u017eimir", "option": "+"}, {"voter": "Vu\u010deti\u0107 Marko", "option": "+"}, {"voter": "Zekanovi\u0107 Hrvoje", "option": "+"}]},
+    """
+    def __init__(self, data, reference):
+        # call init of parent object
+        super(SessionParser, self).__init__(reference)
+
+        self.session = {
+            "organization": self.reference.commons_id,
+            "organizations": [self.reference.commons_id],
+            "in_review": False,
+        }
+        self.session['name'] = data['text']
+        self.session['start_time'] = data['date'].isoformat()
+        session_id, session_status = self.add_or_get_session(data['text'], self.session)
+        print(session_status)

@@ -11,9 +11,15 @@ from ukparser.spiders.people_spider import PeopleSpider
 from ukparser.spiders.content_spider import ContentSpider
 from datetime import datetime
 
+from .data_parser.session_parser import SessionParser
+from .data_parser.vote_parser import BallotsParser
+from .data_parser.speech_parser import SpeechParser
+
 import scrapy
 from scrapy.pipelines.images import ImagesPipeline
 from scrapy.exceptions import DropItem
+
+COMMONS_ID = 11
 
 class ImagesPipeline(ImagesPipeline):
     members = {}
@@ -49,35 +55,50 @@ class ImagesPipeline(ImagesPipeline):
 
 class UkparserPipeline(object):
     value = 0
-    commons_id = 11
+    commons_id = COMMONS_ID
+    others = 15
     local_data = {}
     members = {}
     parties = {}
-    votes = []
+    links = {}
     areas = {}
+    agenda_items = {}
+    orgs = {}
     
-    added_debates = {}
+    added_session = {}
     added_votes = {}
+    added_links = {}
 
-    debates = {}
+    sessions = {}
+    motions = {}
+    votes = {}
+    votes_dates = {}
+    questions = {}
+    acts = {}
 
     mandate_start_time = datetime(day=1, month=1, year=2015)
 
     def __init__(self):
         print('pipeline getMembers')
-        mps = requests.get(API_URL + 'getMPs').json()
+        mps = getDataFromPagerApiDRF(API_URL + 'persons')
         for mp in mps:
-            self.members[mp['name']] = mp['id']
+            self.members[mp['name_parser']] = mp['id']
 
         print('pipeline parties')
+        print(API_URL + 'organizations/')
         paries = getDataFromPagerApiDRF(API_URL + 'organizations/')
         for pg in paries:
-            self.parties[pg['name_parser']] = pg['id']
+            self.orgs[pg['name_parser']] = pg['id']
+            if pg['classification'] == 'poslanska skupina' or pg['classification'] == 'vlada' :
+                self.parties[pg['name_parser']] = pg['id']
+
+        print(self.parties)
 
         print('pipeline getVotes')
-        votes = getDataFromPagerApi(API_URL + 'getVotes')
+        votes = getDataFromPagerApiDRF(API_URL + 'votes/')
         for vote in votes:
-            self.votes.append(get_vote_key(vote['motion'], vote['start_time']))
+            self.votes[get_vote_key(vote['name'], vote['start_time'])] = vote['id']
+            self.votes_dates[vote['id']] = vote['start_time']
 
         print('pipeline get districts')
         areas = getDataFromPagerApiDRF(API_URL + 'areas')
@@ -87,7 +108,17 @@ class UkparserPipeline(object):
         print('pipeline get sessions')
         sessions = getDataFromPagerApiDRF(API_URL + 'sessions')
         for session in sessions:
-            self.added_debates[get_vote_key(session['name'], session['start_time'])] = session['id']
+            self.sessions[session['name']] = session['id']
+
+        print('pipeline get motions')
+        motions = getDataFromPagerApiDRF(API_URL + 'motions')
+        for motion in motions:
+            self.motions[motion['text']] = motion['id']
+
+        print('pipeline get questions items')
+        items = getDataFromPagerApiDRF(API_URL + 'questions')
+        for item in items:
+            self.questions[item['signature']] = item['id']
 
     def process_item(self, item, spider):
         print(spider)
@@ -96,100 +127,22 @@ class UkparserPipeline(object):
         if type(spider) == ContentSpider:
             print("spider")
             if item['type'] == 'debate':
-                debate_key = get_vote_key(item['text'], item['date'].isoformat())
-                if not debate_key in self.added_debates.keys():
-                    print("save DEBATE MOTION VOTE")
+                #debate_key = get_vote_key(item['text'], item['date'].isoformat())
+                #if not debate_key in self.added_debates.keys():
+                #    print("save DEBATE MOTION VOTE")
                     # send to api and get id
                     # SESSION
-                    response = requests.post(API_URL + 'sessions/',
-                                             json={"name": item['text'],
-                                                   "start_time": item['date'].isoformat(),
-                                                   "organization": self.commons_id,
-                                                   "organizations": [self.commons_id],
-                                                   "in_review": False,},
-                                             auth=HTTPBasicAuth(API_AUTH[0], API_AUTH[1])
-                                            )
-                    print(response.content)
-                    dabate_id = response.json()['id']
-                    debate_key = get_vote_key(item['text'], item['date'].isoformat())
-                    self.debates[debate_key] = dabate_id
 
-                    # MOTION
-                    response = requests.post(API_URL + 'motions/',
-                                             json={"session": dabate_id,
-                                                   "text": item['text'],
-                                                   "date": item['date'].isoformat(),
-                                                   "tags": [','],
-                                                   'party': self.commons_id},
-                                             auth=HTTPBasicAuth(API_AUTH[0], API_AUTH[1])
-                                            )
-                    print(response.content)
-                    motion_id = response.json()['id']
+                SessionParser(item, self)
 
-                    #VOTE
-                    response = requests.post(API_URL + 'votes/',
-                                             json={"session": dabate_id,
-                                                   "name": item['text'],
-                                                   "motion": motion_id,
-                                                   "start_time": item['date'].isoformat(),
-                                                   "tags": [','],
-                                                   "organization": self.commons_id},
-                                             auth=HTTPBasicAuth(API_AUTH[0], API_AUTH[1])
-                                            )
-                    print(response.content)
-                    vote_id = response.json()['id']
-                    self.added_debates[debate_key] = dabate_id
-                    self.added_votes[debate_key] = vote_id
-                    print('process', self.value, item)
-                else:
-                    print("SKIIIIPPPPPP session")
-
-            elif item['type'] == 'ballot':
-                print("save BALLOT")
-                print('process', self.value, item)
-                vote_key = get_vote_key(item['text'], item['date'].isoformat())
-                if not vote_key in self.votes:
-                    if vote_key in self.added_votes.keys():
-                        vote_id = self.added_votes[vote_key]
-                        person_id = self.members[item['name']]
-                        item['party'].split('(')[0].strip()
-                        try:
-                            party_id = self.parties[item['party'].split('(')[0].strip()]
-                        except:
-                            party_id = None
-                        response = requests.post(API_URL + 'ballots/',
-                                                 json={"option": item['option'],
-                                                       "vote": vote_id,
-                                                       "voter": person_id,
-                                                       "voterparty": party_id},
-                                                 auth=HTTPBasicAuth(API_AUTH[0], API_AUTH[1])
-                                                )
-                else:
-                    print("SKIIIIPPPPPP ballots")
+            elif item['type'] == 'ballots':
+                #BallotsParser(item, self)
+                pass
 
             # SPEECH
             elif item['type'] =='speech':
-                print("save SPEECH")
-                print('process', self.value, item)
-                debate_text = item['debate_text']
-                debate_date = item['debate_date']
-                debate_key = get_vote_key(debate_text, debate_date.isoformat())
-                if not debate_key in self.votes:
-                    person_id = self.members[item['speaker']]
-                    debate_id = self.added_debates[debate_key]
-                    response = requests.post(API_URL + 'speechs/',
-                                             json={"start_time": item['date'].isoformat(),
-                                                   "speaker": person_id,
-                                                   "content": item['content'],
-                                                   "session": debate_id,
-                                                   "valid_from": item['date'].isoformat(),
-                                                   "valid_to": datetime.max.isoformat(),
-                                                   'party': self.commons_id,
-                                                   'order': item['order']},
-                                             auth=HTTPBasicAuth(API_AUTH[0], API_AUTH[1])
-                                            )
-                else:
-                    print("SKIIIIPPPPPP speech")
+                SpeechParser(item, self)
+
 
         #PEOPLE PARSER
         elif type(spider) == PeopleSpider:
@@ -265,6 +218,7 @@ def getDataFromPagerApiDRF(url):
     data = []
     end = False
     page = 1
+    url = url + '?limit=100'
     while url:
         response = requests.get(url, auth=HTTPBasicAuth(API_AUTH[0], API_AUTH[1])).json()
         print(response.keys())

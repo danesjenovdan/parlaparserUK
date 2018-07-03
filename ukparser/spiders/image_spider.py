@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 
-class PeopleSpider(scrapy.Spider):
+class ImageSpider(scrapy.Spider):
     name = 'images'
 
     custom_settings = {

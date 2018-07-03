@@ -23,8 +23,8 @@ class VotesSpider(scrapy.Spider):
                 print("continue")
                 continue
             # dont parse too much
-            if i ==2:
-                break
+            #if i == 2:
+            #    break
             if vote.css("td::text").extract()[0] == 'Commons':
                 url = 'http://www.publicwhip.org.uk/' + vote.css("td > a::attr(href)").extract()[0]
                 yield scrapy.Request(url=url, callback=self.get_balots_url)

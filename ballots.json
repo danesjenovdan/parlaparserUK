@@ -1,0 +1,9 @@
+response = requests.post(API_URL + 'speechs/',
+                         json={"start_time": item['date'].isoformat(),
+                               "speaker": 1352,
+                               "content": item['content'],
+                               "session": 12,
+                               "valid_from": item['date'].isoformat(),
+                               "valid_to": datetime.max.isoformat()},
+                         auth=HTTPBasicAuth(API_AUTH[0], API_AUTH[1])
+                        )

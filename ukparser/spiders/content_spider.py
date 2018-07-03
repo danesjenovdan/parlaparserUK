@@ -56,6 +56,7 @@ class ContentSpider(scrapy.Spider):
                    'text': text.strip(),
                    'motion_note': get_row_text(response.css('div.motion'))[0]}
         # BALLOTS
+        """
         for paragraf in response.css('div#main > p'):
             print("ballot")
             for href in paragraf.css('a'):
@@ -64,6 +65,7 @@ class ContentSpider(scrapy.Spider):
                     request = scrapy.Request(url=url, callback=self.parse_ballots)
                     request.meta['text'] = text
                     yield request
+        """
 
         # SPEECHES
         url = response.css('div#main > div.motion > p > b').css("a::attr(href)").extract()[0]
@@ -79,7 +81,7 @@ class ContentSpider(scrapy.Spider):
         fdate = datetime.strptime(date.strip(), '%d %b %Y at %H:%M')
         #text = ' — '.join(title.split(' — ')[:-1])
         text = response.meta['text']
-        data = []
+        ballots = []
         for i, ballot in enumerate(response.css('table.votes > tr')):
             if i == 0:
                 print("continue")
@@ -89,19 +91,28 @@ class ContentSpider(scrapy.Spider):
             option = tds[3]
             party = tds[2]
 
-            yield {'type': 'ballot',
-                   'name': name,
-                   'option': option,
-                   'date': fdate,
-                   'party': party,
-                   'text' : text.strip()
-                   }
+            ballots.append(
+                {
+                    'voter': name,
+                    'option': option,
+                    'party': party,
+                }
+            )
+        data = {
+            'type': 'ballots',
+            'date': fdate,
+            'text' : text.strip(),
+            'ballots': ballots
+        }
+        yield data
 
     def parse_speeches(self, response):
         speech_order = 0
         nums = ["th", "rd", "nd", "st"]
         text = response.meta['text']
         ddate = response.meta['fdate']
+
+        speeches = []
         for speech in response.css('div.debate-speech'):
             try:
                 speaker = speech.css('strong.debate-speech__speaker__name::text').extract()[0]
@@ -116,14 +127,19 @@ class ContentSpider(scrapy.Spider):
             content = get_row_text(speech.css('div.debate-speech__content'))[0]
 
             print(response.url)
-            yield {'type': 'speech',
-                   'speaker': speaker,
-                   'content': content,
-                   'date': ddate,
-                   'debate_text': text,
-                   'debate_date': ddate,
-                   'order': speech_order
-                   }
+            speeches.append({
+               'speaker': speaker,
+               'content': content,
+               'date': ddate, 
+               'order': speech_order
+            })
+        yield {
+            'type': 'speech',
+            'date': ddate,
+            'debate_text': text,
+            'debate_date': ddate,
+            'speeches': speeches
+        }
 
 
 def get_row_text(row):
