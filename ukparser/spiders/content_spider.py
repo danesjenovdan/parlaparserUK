@@ -129,7 +129,6 @@ class ContentSpider(scrapy.Spider):
             #fdata = datetime.strptime(date.strip(), '%H:%M %p, %d %B %Y')
             content = get_row_text(speech.css('div.debate-speech__content'))[0]
 
-            print(response.url)
             speeches.append({
                'speaker': speaker,
                'content': content,
