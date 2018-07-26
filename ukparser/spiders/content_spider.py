@@ -47,7 +47,10 @@ class ContentSpider(scrapy.Spider):
             parse_motion = False
             title = response.css('div#main > h1::text').extract()[0]
             date = title.split(' — ')[-1]
-            fdate = datetime.strptime(date.strip(), '%d %b %Y at %H:%M')
+            if 'at' in date.strip():
+                fdate = datetime.strptime(date.strip(), '%d %b %Y at %H:%M')
+            else:
+                fdate = datetime.strptime(date.strip(), '%d %b %Y')
             text = ' — '.join(title.split(' — ')[:-1]).strip()
 
             text += '||' + mot_id
