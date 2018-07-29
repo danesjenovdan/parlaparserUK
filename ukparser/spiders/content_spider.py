@@ -26,8 +26,8 @@ class ContentSpider(scrapy.Spider):
             # dont parse too much
             #if i ==2:
             #    break
-            count += 1
-            print("Count: ", count)
+            self.count += 1
+            print("Count: ", self.count)
             if vote.css("td::text").extract()[0] == 'Commons':
                 url = 'http://www.publicwhip.org.uk/' + vote.css("td > a::attr(href)").extract()[0]
                 yield scrapy.Request(url=url, callback=self.get_balots_url)
