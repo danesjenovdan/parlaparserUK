@@ -50,6 +50,8 @@ class ContentSpider(scrapy.Spider):
             parse_motion = False
             title = response.css('div#main > h1::text').extract()[0]
             date = title.split(' — ')[-1]
+            while not date[0].isdigit():
+                date = date[1:]
             if 'at' in date.strip():
                 fdate = datetime.strptime(date.strip(), '%d %b %Y at %H:%M')
             else:
