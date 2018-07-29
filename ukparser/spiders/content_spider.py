@@ -84,7 +84,11 @@ class ContentSpider(scrapy.Spider):
     def parse_ballots(self, response):
         title = response.css('div#main > h1::text').extract()[0]
         date = title.split(' — ')[-1]
-        fdate = datetime.strptime(date.strip(), '%d %b %Y at %H:%M')
+        try:
+            fdate = datetime.strptime(date.strip(), '%d %b %Y at %H:%M')
+        except:
+            fdate = datetime.strptime(date.strip(), '%d %b %Y')
+
         #text = ' — '.join(title.split(' — ')[:-1])
         text = response.meta['text']
         ballots = []
