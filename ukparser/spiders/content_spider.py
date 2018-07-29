@@ -26,8 +26,8 @@ class ContentSpider(scrapy.Spider):
             # dont parse too much
             #if i ==2:
             #    break
-            count += 1
-            print("Count: ", count)
+            self.count += 1
+            print("Count: ", self.count)
             if vote.css("td::text").extract()[0] == 'Commons':
                 url = 'http://www.publicwhip.org.uk/' + vote.css("td > a::attr(href)").extract()[0]
                 yield scrapy.Request(url=url, callback=self.get_balots_url)
@@ -64,7 +64,7 @@ class ContentSpider(scrapy.Spider):
                    'text': text.strip(),
                    'motion_note': get_row_text(response.css('div.motion'))[0]}
         # BALLOTS
-        """
+
         for paragraf in response.css('div#main > p'):
             print("ballot")
             for href in paragraf.css('a'):
@@ -73,7 +73,7 @@ class ContentSpider(scrapy.Spider):
                     request = scrapy.Request(url=url, callback=self.parse_ballots)
                     request.meta['text'] = text
                     yield request
-        """
+
 
         # SPEECHES
         url = response.css('div#main > div.motion > p > b').css("a::attr(href)").extract()[0]
