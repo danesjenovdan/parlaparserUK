@@ -28,4 +28,4 @@ class SessionParser(BaseParser):
         self.session['name'] = data['text']
         self.session['start_time'] = data['date'].isoformat()
         session_id, session_status = self.add_or_get_session(data['text'], self.session)
-        print(session_status)
+        print('session_status', session_status)
